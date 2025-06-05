@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>EmulatorJS | Demo</title>
+        <title>Nexus emulador</title>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64" type="image/vnd.microsoft.icon">
@@ -69,7 +69,7 @@
             }
 
             select, button {
-                padding: 0 0.4em;
+                padding: 0.6em 0.4em;
                 margin: 0.5em 0.1em;
                 width: 15em;
                 max-width: 100%;
@@ -215,7 +215,7 @@
     </head>
     <body>
         <div id="top">
-            <h1>EmulatorJS Demo</h1>
+            <h1>Nexus Emulador</h1>
             <img src="img/logo-light.png" alt="Logo" class="logo">
         </div>
         <div id="box">
@@ -245,7 +245,7 @@
                 </div>
                 <div class="options">
                     <p id="offline-status">Offline Status: CHECKING</p>
-                    <p>Offline Cores will be available soon.</p>
+                    <p>Offline Cores will be avilable soon.</p>
                     <p class="hide">Remove All Saved Versions: <button id="remove-version" onclick="removeallsaved()">Remove All</button></p>
                     <div id="installbox"><p id="installboxtext">Install PWA:</p> <button id="install">Install</button></div>
                     </div>
@@ -257,32 +257,31 @@
         <div class="popup-overlay"></div>
         <script>
             if ("serviceWorker" in navigator) {
-                const req = navigator.serviceWorker.register("sw.js");
-                console.log(req);
+                navigator.serviceWorker.register("sw.js");
             };
-            loadJSON("/versions", (response) => {
-                if (!response) {
-                    loadJSON("https://cdn.emulatorjs.org/versions.json", resp => loadVersions(resp));
+            loadJSON("/versions", function(response){ 
+                if(response == null){
+                    loadJSON("https://cdn.emulatorjs.org/versions.json", function(response){ loadVersions(response)});
                     document.getElementById("offline-status").textContent = "Offline Status: NOT INSTALLED";
                 } else {
                     loadVersions(response);
                     document.getElementById("offline-status").textContent = "Offline Status: READY";
                 }
             });
-            function loadVersions(response) {
+            function loadVersions(response){
                 const version_select = document.getElementById("version-select");
                 var versions = JSON.parse(response);
                 version_select.innerHTML = "";
                 addOptions(version_select, versions.releases, versions.default, versions.github);
                 addOptions(version_select, versions.versions, versions.default);
-                version_select.addEventListener("change", () => {
+                version_select.onchange = () => {
                     localStorage.setItem("version", version_select[version_select.selectedIndex].textContent);
                     window.cdn = "https://cdn.emulatorjs.org/" + version_select[version_select.selectedIndex].value + "data/";
-                });
+                }
             }
-            input.addEventListener("change", async () => {
-                const url = input.files[0];
-                const parts = input.files[0].name.split(".");
+            input.onchange = async () => {
+                const url = URL.createObjectURL(new Blob([input.files[0]]))
+                const parts = input.files[0].name.split(".")
 
                 const core = await (async (ext) => {
                     if (["fds", "nes", "unif", "unf"].includes(ext))
@@ -337,8 +336,7 @@
                             "SNK NeoGeo Pocket (Color)": "ngp",
                             "Bandai WonderSwan (Color)": "ws",
                             "ColecoVision": "coleco",
-                            "Commodore 64": "vice_x64",
-                            "PlayStation Portable": "psp"
+                            "Commodore 64": "vice_x64"
                         }
 
                         const button = document.createElement("button")
@@ -376,26 +374,22 @@
                 div.appendChild(sub)
                 document.body.appendChild(div)
 
-                const cdn = window.cdn || "https://cdn.emulatorjs.org/stable/data/"
-
                 window.EJS_player = "#game";
                 window.EJS_gameName = parts.shift();
                 window.EJS_biosUrl = "";
                 window.EJS_gameUrl = url;
                 window.EJS_core = core;
-                window.EJS_pathtodata = cdn;
+                window.EJS_pathtodata = (window.cdn) ? window.cdn : "https://cdn.emulatorjs.org/stable/data/";
                 window.EJS_startOnLoaded = true;
                 window.EJS_AdUrl = "https://ads.emulatorjs.org/";
-                if (core === "psp") {
-                    window.EJS_threads = true;
-                }
+                window.EJS_disableDatabases = true;
                 window.EJS_ready = function() {
                     detectAdBlock("data:text/html;base64,PGh0bWw+PHN0eWxlPiNhZGJsb2Nre2JhY2tncm91bmQtY29sb3I6cmdiYSgwLDAsMCwuOCk7cG9zaXRpb246Zml4ZWQ7d2lkdGg6MTAwJTtoZWlnaHQ6MTAwJTt0b3A6MDtsZWZ0OjA7ei1pbmRleDoxMDAwO3RleHQtYWxpZ246Y2VudGVyO2NvbG9yOiNmZmZ9Ym9keSxodG1se2JhY2tncm91bmQtY29sb3I6dHJhbnNwYXJlbnR9PC9zdHlsZT48Ym9keSBzdHlsZT0ibWFyZ2luOjAiPjxkaXYgaWQ9ImFkYmxvY2siPjxoMT5IaSBBZGJsb2NrIFVzZXIhPC9oMT48cD5BZHMgb24gdGhpcyBwYWdlIG1heSBjb21lIGFuZCBnbyBkZXBlbmRpbmcgb24gaG93IG1hbnkgcGVvcGxlIGFyZSBmdW5kaW5nIHRoaXMgcHJvamVjdC48YnI+WW91IGNhbiBoZWxwIGZ1bmQgdGhpcyBwcm9qZWN0IG9uPGEgaHJlZj0iaHR0cHM6Ly9wYXRyZW9uLmNvbS9FbXVsYXRvckpTIj5wYXRyZW9uPC9hPjwvcD48L2Rpdj48L2JvZHk+PC9odG1sPg==");
                 }
                 
-                script.src = cdn + "loader.js";
+                script.src = (window.cdn) ? window.cdn + "loader.js" : "https://cdn.emulatorjs.org/stable/data/loader.js";
                 document.body.appendChild(script);
-            });
+            }
 
             box.ondragover = () => box.setAttribute("drag", true);
             box.ondragleave = () => box.removeAttribute("drag");
@@ -528,5 +522,6 @@
                 });
             });
         </script>
-    </body>
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"8cccd03c5995a1d0","version":"2024.8.0","r":1,"token":"192fdaadd1094fdfa2eb6daf77e04988","serverTiming":{"name":{"cfExtPri":true,"cfL4":true}}}' crossorigin="anonymous"></script>
+</body>
 </html>
